@@ -1,0 +1,4 @@
+{
+    "positron.notebook.enabled": true,
+    "positron.assistant.notebook.ghostCellSuggestions.enabled": true
+}
