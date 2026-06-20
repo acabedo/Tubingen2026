@@ -54,7 +54,7 @@ if (file.exists("R/portability.R")) source("R/portability.R")
 # Preparar el entorno Python del proyecto la PRIMERA vez (crea conda + nivel core),
 # para que abrir app.R con "Run App" funcione igual que ejecutar run.R. En arranques
 # posteriores el entorno ya existe y este bloque no hace nada.
-if (file.exists("setup_python.R") && exists("ORALSTATS_VENV")) {
+if (file.exists("R/setup_python.R") && exists("ORALSTATS_VENV")) {
   .oralstats_env_ok <- isTRUE(tryCatch(
     requireNamespace("reticulate", quietly = TRUE) &&
       ORALSTATS_VENV %in% tryCatch(reticulate::conda_list()$name,
@@ -63,7 +63,7 @@ if (file.exists("setup_python.R") && exists("ORALSTATS_VENV")) {
   ))
   if (!.oralstats_env_ok) {
     message("OralStats: preparando el entorno Python por primera vez (puede tardar varios minutos)…")
-    source("setup_python.R")
+    source("R/setup_python.R")
     try(oralstats_bootstrap(Sys.getenv("ORALSTATS_PY_LEVEL", "core")), silent = TRUE)
   }
 }
@@ -4717,7 +4717,7 @@ h5(icon("upload"), " O importar manualmente"),
           ", y pip para el resto), evitando los errores de compilación. Solo necesitas ",
           strong("R"), " y conexión a Internet la primera vez."),
         p(class = "text-muted", style = "font-size:0.9em;",
-          "Alternativa de un comando si ya usas conda: ", tags$code("conda env create -f environment.yml"),
+          "Alternativa de un comando si ya usas conda: ", tags$code("conda env create -f python/environment.yml"),
           ". O preparar el entorno a mano por sistema:"),
 
         hr(),
@@ -4739,7 +4739,7 @@ h5(icon("upload"), " O importar manualmente"),
             p(tags$strong("3. (Opcional) Transcripci\u00f3n con WhisperX:"),
               " pulsa \u201cInstalar Transcripci\u00f3n (nivel 3)\u201d arriba, o:"),
             tags$pre(style = "background:#1e1e1e; color:#d4d4d4; border-radius:4px; padding:10px;",
-              "Rscript setup_python.R asr"),
+              "Rscript R/setup_python.R asr"),
             p(class = "text-muted", style = "font-size:0.88em;",
               icon("info-circle"),
               " La primera vez que se use pysentimiento descargar\u00e1 autom\u00e1ticamente el modelo RoBERTuito (~500 MB). ",
@@ -4764,7 +4764,7 @@ h5(icon("upload"), " O importar manualmente"),
             tags$pre(style = "background:#1e1e1e; color:#d4d4d4; border-radius:4px; padding:10px;",
               "Rscript run.R"),
             p(tags$strong("3. (Opcional) Transcripci\u00f3n con WhisperX:"),
-              " usa \u201cInstalar Transcripci\u00f3n (nivel 3)\u201d arriba, o ", tags$code("Rscript setup_python.R asr"), "."),
+              " usa \u201cInstalar Transcripci\u00f3n (nivel 3)\u201d arriba, o ", tags$code("Rscript R/setup_python.R asr"), "."),
             p(class = "text-muted", style = "font-size:0.88em;",
               icon("info-circle"),
               " Si OralStats no encuentra un Python 3.10\u20133.12, define ",
@@ -4790,7 +4790,7 @@ h5(icon("upload"), " O importar manualmente"),
             tags$pre(style = "background:#1e1e1e; color:#d4d4d4; border-radius:4px; padding:10px;",
               "Rscript run.R"),
             p(tags$strong("3. (Opcional) Transcripción con WhisperX:"),
-              " usa el botón de arriba o ", tags$code("Rscript setup_python.R asr"), ".")
+              " usa el botón de arriba o ", tags$code("Rscript R/setup_python.R asr"), ".")
           )
         ),
 
@@ -4949,7 +4949,7 @@ server <- function(input, output, session) {
 
   lanzar_instalacion <- function(nivel) {
     rscript <- file.path(R.home("bin"), if (.Platform$OS.type == "windows") "Rscript.exe" else "Rscript")
-    system2(rscript, c("setup_python.R", nivel), wait = FALSE)
+    system2(rscript, c("R/setup_python.R", nivel), wait = FALSE)
     showNotification(
       paste0("Instalando nivel '", nivel, "' en segundo plano. Puede tardar varios minutos; ",
              "pulsa 'Verificar ahora' cuando termine."),
@@ -9211,7 +9211,7 @@ rds_files <- grep("\\.meta\\.rds$",
       write.table(ips_export, ips_file, sep = "\t", row.names = FALSE, quote = TRUE)
 
       # ── Buscar script ─────────────────────────────────────────────────────
-      script_name <- "analyze_sentiment_emotion.py"
+      script_name <- file.path("python", "analyze_sentiment_emotion.py")
       script_path <- NULL
       search_paths <- c(file.path(getwd(), script_name), file.path(".", script_name))
       app_dir <- tryCatch(dirname(rstudioapi::getSourceEditorContext()$path), error = function(e) NULL)
@@ -9756,7 +9756,7 @@ observe({
 
       write.table(ips_exp, ips_file, sep = "\t", row.names = FALSE, quote = TRUE)
 
-      script_name <- "analyze_sentiment_emotion.py"
+      script_name <- file.path("python", "analyze_sentiment_emotion.py")
       script_path <- NULL
       for (sp in c(file.path(getwd(), script_name), file.path(".", script_name))) {
         if (!is.null(sp) && file.exists(sp)) { script_path <- normalizePath(sp); break }
@@ -15905,7 +15905,7 @@ computar_clausulas <- function(umbral_pct = NULL, umbral_dif_st = NULL,
         incProgress(0.2, detail = paste0("Procesando ", length(comunes), " par(es)..."))
 
         # Buscar script Python
-        script_path <- file.path(getwd(), "extract_with_parselmouth.py")
+        script_path <- file.path(getwd(), "python", "extract_with_parselmouth.py")
         if (!file.exists(script_path)) {
           # Intentar en directorio de la app
           possible_dirs <- c(
@@ -15914,14 +15914,14 @@ computar_clausulas <- function(umbral_pct = NULL, umbral_dif_st = NULL,
             "."
           )
           for (d in possible_dirs) {
-            candidate <- file.path(d, "extract_with_parselmouth.py")
+            candidate <- file.path(d, "python", "extract_with_parselmouth.py")
             if (file.exists(candidate)) { script_path <- candidate; break }
           }
         }
 
         if (!file.exists(script_path)) {
           showNotification(
-            "No se encontró extract_with_parselmouth.py. Colócalo junto a app.R.",
+            "No se encontró python/extract_with_parselmouth.py.",
             type = "error", duration = 10)
           return()
         }

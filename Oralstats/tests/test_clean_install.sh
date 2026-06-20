@@ -4,7 +4,7 @@
 # cero en una copia temporal del repo y arranca la app. Restaura todo al salir.
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "$0")" && pwd)"          # .../Oralstats
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"       # .../Oralstats (el script vive en tests/)
 TMP="$(mktemp -d)"
 echo ">> Carpeta temporal: $TMP"
 

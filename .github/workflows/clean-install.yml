@@ -37,6 +37,6 @@ jobs:
       - name: Verificar que el núcleo carga
         run: Rscript -e "pk <- c('shiny','bslib','shinyjs','ggplot2','dplyr','tidyr','DT','plotly','RColorBrewer','data.table','jsonlite','seewave','tuneR','reticulate'); for (p in pk) library(p, character.only = TRUE); cat('NUCLEO OK\n')"
       - name: Bootstrap Python (core)
-        run: Rscript setup_python.R core
+        run: Rscript R/setup_python.R core
       - name: Test de helpers de portabilidad
         run: Rscript tests/test_portability.R
