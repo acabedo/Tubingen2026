@@ -51,6 +51,23 @@ praatpicture_disponible <- requireNamespace("praatpicture", quietly = TRUE)
 # Helpers de portabilidad (intérprete Python del proyecto + binarios de sistema).
 if (file.exists("R/portability.R")) source("R/portability.R")
 
+# Preparar el entorno Python del proyecto la PRIMERA vez (crea conda + nivel core),
+# para que abrir app.R con "Run App" funcione igual que ejecutar run.R. En arranques
+# posteriores el entorno ya existe y este bloque no hace nada.
+if (file.exists("setup_python.R") && exists("ORALSTATS_VENV")) {
+  .oralstats_env_ok <- isTRUE(tryCatch(
+    requireNamespace("reticulate", quietly = TRUE) &&
+      ORALSTATS_VENV %in% tryCatch(reticulate::conda_list()$name,
+                                   error = function(e) character(0)),
+    error = function(e) FALSE
+  ))
+  if (!.oralstats_env_ok) {
+    message("OralStats: preparando el entorno Python por primera vez (puede tardar varios minutos)…")
+    source("setup_python.R")
+    try(oralstats_bootstrap(Sys.getenv("ORALSTATS_PY_LEVEL", "core")), silent = TRUE)
+  }
+}
+
 # ========================================
 # TRANSCRIPCIÓN FONÉTICA IPA (ESPAÑOL)
 # ========================================
@@ -4687,19 +4704,21 @@ h5(icon("upload"), " O importar manualmente"),
 
         # ── Entorno virtual recomendado ────────────────────────────────────
         h4(icon("shield-alt"), " Entorno e instalación"),
-        p("Lo más sencillo es ", strong("ejecutar la app con "), tags$code("Rscript run.R"),
-          " desde la carpeta ", tags$code("Oralstats/"), ": la primera vez crea automáticamente ",
-          "un entorno virtual propio del proyecto (", tags$code("oralstats-env"), ") sobre un Python ",
-          "compatible, instala las dependencias y arranca. Los niveles 2 y 3 también se añaden ",
-          "desde los botones de arriba."),
-        div(class = "alert alert-warning", style = "font-size:0.9em;",
-          icon("exclamation-triangle"), tags$strong(" Versión de Python: "),
-          "usa ", tags$strong("Python 3.10–3.12"), ". En versiones muy nuevas (3.13/3.14), ",
-          tags$code("torch"), "/", tags$code("whisperx"), " aún no tienen ", tags$em("wheels"),
-          " y los niveles 2/3 fallan al intentar compilar. Si tu Python por defecto es 3.13+, instala 3.12 ",
-          "o define ", tags$code("ORALSTATS_PYTHON=/ruta/a/python3.12"), " antes de la primera ejecución."),
+        p(strong("No necesitas instalar Python ni conda a mano."), " Solo abre ",
+          tags$code("run.R"), " y pulsa ", strong("Source"), " (o ejecuta ", tags$code("Rscript run.R"),
+          " desde la carpeta ", tags$code("Oralstats/"), "). La primera vez: instala los paquetes de R, ",
+          "instala ", strong("Miniconda"), " si hace falta, crea el entorno del proyecto (",
+          tags$code("oralstats-env"), ") e instala el núcleo (Parselmouth). Los niveles 2 y 3 se añaden ",
+          "con los botones de arriba."),
+        div(class = "alert alert-success", style = "font-size:0.9em;",
+          icon("check-circle"), tags$strong(" Sin compilar nada: "),
+          "el entorno Python se crea con ", strong("conda"), " (binarios de conda-forge para ",
+          tags$code("torch"), "/", tags$code("spacy"), "/", tags$code("numba"),
+          ", y pip para el resto), evitando los errores de compilación. Solo necesitas ",
+          strong("R"), " y conexión a Internet la primera vez."),
         p(class = "text-muted", style = "font-size:0.9em;",
-          "Si prefieres preparar el entorno a mano (o OralStats no encuentra Python), sigue los pasos por sistema:"),
+          "Alternativa de un comando si ya usas conda: ", tags$code("conda env create -f environment.yml"),
+          ". O preparar el entorno a mano por sistema:"),
 
         hr(),
 
