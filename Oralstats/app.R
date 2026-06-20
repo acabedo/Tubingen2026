@@ -44,6 +44,9 @@ seewave_disponible <- requireNamespace("seewave", quietly = TRUE)
 base64enc_disponible <- requireNamespace("base64enc", quietly = TRUE)
 praatpicture_disponible <- requireNamespace("praatpicture", quietly = TRUE)
 
+# Helpers de portabilidad (intérprete Python del proyecto + binarios de sistema).
+if (file.exists("R/portability.R")) source("R/portability.R")
+
 # ========================================
 # TRANSCRIPCIÓN FONÉTICA IPA (ESPAÑOL)
 # ========================================
@@ -4618,7 +4621,13 @@ h5(icon("upload"), " O importar manualmente"),
                          class = "btn-sm btn-outline-primary")
           ),
           div(class = "card-body p-2",
-            uiOutput("ui_diagnostico_python")
+            uiOutput("ui_diagnostico_python"),
+            tags$div(class = "mt-2 d-flex gap-2 flex-wrap",
+              actionButton("btn_instalar_nivel2", "Instalar Texto/Emoción (nivel 2)",
+                           class = "btn-sm btn-outline-warning"),
+              actionButton("btn_instalar_nivel3", "Instalar Transcripción (nivel 3)",
+                           class = "btn-sm btn-outline-success")
+            )
           )
         ),
 
@@ -4848,18 +4857,15 @@ h5(icon("upload"), " O importar manualmente"),
 server <- function(input, output, session) {
   options(shiny.maxRequestSize = 1000*1024^2)
 
-  # ── Helper: ruta al Python del virtualenv bert-env (cross-platform) ──────────
-  # Windows: Scripts\python.exe  |  Unix/Mac: bin/python3
-  .python_venv_path <- local({
-    home <- Sys.getenv("HOME")
-    if (nchar(home) == 0) home <- Sys.getenv("USERPROFILE")  # Windows fallback
-    if (.Platform$OS.type == "windows") {
-      file.path(home, ".virtualenvs", "bert-env", "Scripts", "python.exe")
-    } else {
-      file.path(home, ".virtualenvs", "bert-env", "bin", "python3")
-    }
-  })
-  # Candidatos adicionales de Python en Windows (python.exe vs python3)
+  # ── Intérprete Python del proyecto (reticulate) con fallback ────────────────
+  # oralstats_python() (R/portability.R) prioriza el venv del proyecto
+  # 'oralstats-env', luego ~/.virtualenvs/bert-env, luego el PATH.
+  .python_venv_path <- if (exists("oralstats_python")) {
+    tryCatch(oralstats_python(), error = function(e) NA_character_)
+  } else {
+    NA_character_
+  }
+  # Candidatos adicionales de Python (fallback si el venv del proyecto falla)
   .python_sys_candidates <- if (.Platform$OS.type == "windows") {
     c(Sys.which("python3"), Sys.which("python"))
   } else {
@@ -4888,17 +4894,24 @@ server <- function(input, output, session) {
       if (ret == 0) "OK" else "NO"
     }
 
-    ffmpeg_ok <- nchar(Sys.which("ffmpeg")) > 0
+    sysdeps <- if (exists("check_system_deps")) check_system_deps() else
+      list(praat = list(found = FALSE), ffmpeg = list(found = FALSE),
+           pandoc = list(found = FALSE), chrome = list(found = FALSE))
 
     list(
-      py_bin     = if (!is.na(py_bin)) py_bin else "(no encontrado)",
-      whisperx   = check_lib("whisperx"),
-      pyannote   = check_lib("pyannote.audio"),
-      parselmouth = check_lib("parselmouth"),
-      pysentimiento = check_lib("pysentimiento"),
-      funasr     = check_lib("funasr"),
-      ffmpeg     = if (ffmpeg_ok) "OK" else "NO",
-      ts         = format(Sys.time(), "%H:%M:%S")
+      py_bin       = if (!is.na(py_bin)) py_bin else "(no encontrado)",
+      parselmouth  = check_lib("parselmouth"),     # nivel 1
+      tgt          = check_lib("tgt"),              # nivel 1
+      pysentimiento = check_lib("pysentimiento"),  # nivel 2
+      funasr       = check_lib("funasr"),          # nivel 2
+      soundfile    = check_lib("soundfile"),       # nivel 2
+      whisperx     = check_lib("whisperx"),        # nivel 3
+      pyannote     = check_lib("pyannote.audio"),  # nivel 3
+      praat        = if (sysdeps$praat$found)  "OK" else "NO",
+      ffmpeg       = if (sysdeps$ffmpeg$found) "OK" else "NO",
+      pandoc       = if (sysdeps$pandoc$found) "OK" else "NO",
+      chrome       = if (sysdeps$chrome$found) "OK" else "NO",
+      ts           = format(Sys.time(), "%H:%M:%S")
     )
   }
 
@@ -4906,6 +4919,18 @@ server <- function(input, output, session) {
     rv_diagnostico(NULL)  # spinner
     isolate({ rv_diagnostico(run_diagnostico()) })
   }, ignoreNULL = TRUE)
+
+  lanzar_instalacion <- function(nivel) {
+    rscript <- file.path(R.home("bin"), if (.Platform$OS.type == "windows") "Rscript.exe" else "Rscript")
+    system2(rscript, c("setup_python.R", nivel), wait = FALSE)
+    showNotification(
+      paste0("Instalando nivel '", nivel, "' en segundo plano. Puede tardar varios minutos; ",
+             "pulsa 'Verificar ahora' cuando termine."),
+      type = "message", duration = 12
+    )
+  }
+  observeEvent(input$btn_instalar_nivel2, lanzar_instalacion("text"))
+  observeEvent(input$btn_instalar_nivel3, lanzar_instalacion("asr"))
 
   # Ejecutar diagnóstico inicial al arrancar la sesión (sin bloquear UI)
   observe({
