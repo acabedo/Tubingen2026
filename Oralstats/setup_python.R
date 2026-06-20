@@ -33,10 +33,19 @@ oralstats_bootstrap <- function(level = "core") {
 
   conda <- tryCatch(reticulate::conda_binary(), error = function(e) NA_character_)
   if (is.na(conda)) {
-    warning("No se encontró conda/mamba. Instala miniforge ",
-            "(https://github.com/conda-forge/miniforge) y vuelve a ejecutar. ",
-            "El entorno Python de OralStats se crea con conda.")
-    return(invisible(NA_character_))
+    # Sin conda: instalar Miniconda automáticamente (el usuario NO tiene que
+    # instalar nada a mano). Es una descarga única de ~1-2 min.
+    message("No se encontró conda. Instalando Miniconda automáticamente (una sola vez)…")
+    ok <- tryCatch({ reticulate::install_miniconda(update = FALSE); TRUE },
+                   error = function(e) {
+                     message("Aviso: no se pudo instalar Miniconda: ", conditionMessage(e)); FALSE
+                   })
+    conda <- tryCatch(reticulate::conda_binary(), error = function(e) NA_character_)
+    if (!ok || is.na(conda)) {
+      warning("No se pudo preparar conda automáticamente. Instala miniforge a mano ",
+              "(https://github.com/conda-forge/miniforge) y vuelve a ejecutar.")
+      return(invisible(NA_character_))
+    }
   }
 
   # Crear el entorno si no existe (Python de arquitectura nativa, vía conda).
