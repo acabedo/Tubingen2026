@@ -160,6 +160,8 @@ pip install praat-parselmouth pysentimiento torch torchaudio funasr soundfile wh
 # MFA se instala vía conda: conda install -c conda-forge montreal-forced-aligner
 ```
 
+> **Nota (Python muy reciente):** los niveles 2 y 3 (`pysentimiento`/`funasr` y `whisperx`/`pyannote`) dependen de `torch`, que puede no tener *wheels* para versiones de Python muy nuevas (p. ej. 3.14). Si la instalación de esos niveles falla, usa un intérprete Python 3.11–3.12 para el entorno `oralstats-env`. El nivel 1 (parselmouth) y el resto de la app funcionan con cualquier Python ≥3.9.
+
 > Los notebooks están pensados para ejecutarse en **Google Colab** (el de transcripción aprovecha la GPU; el de MFA usa CPU). El de diarización requiere un **token de Hugging Face** para `pyannote`.
 
 ---
@@ -171,7 +173,9 @@ pip install praat-parselmouth pysentimiento torch torchaudio funasr soundfile wh
    ```r
    shiny::runApp("aph_extractor/app.R")     # APH
    shiny::runApp("etiquetador/etiquetador_oral.R")   # Etiquetador oral
-   shiny::runApp("Oralstats/Oralstats.R")   # Oralstats v1.8
+   # Primera vez (reproduce el entorno R + Python y arranca):
+   Rscript Oralstats/run.R                   # Oralstats v1.8
+   # (o, si ya tienes el entorno listo:)  shiny::runApp("Oralstats")
    ```
 3. Carga las muestras de `samples/` (pares WAV + TextGrid) y reproduce el análisis prosódico.
 
