@@ -235,7 +235,9 @@ extraer_f0_int_r_nativo <- function(wav_path,
 
   # Señal mono normalizada a [-1, 1]  (misma convención que Praat)
   x_int <- if (wav@stereo) (wav@left + wav@right) / 2L else wav@left
-  x     <- as.numeric(x_int) / (2^(bit - 1L))
+  x     <- as.numeric(x_int)
+  if (isTRUE(wav@pcm)) x <- x / (2^(bit - 1L))   # solo PCM entero; float ya viene en [-1,1]
+  x     <- x - mean(x)                            # quitar DC, como hace Praat antes de la intensidad
 
   dur_total <- length(x) / sr
 
