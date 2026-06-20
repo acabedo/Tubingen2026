@@ -15,8 +15,6 @@ export RENV_PATHS_ROOT="$TMP/renv-root"
 BERT="$HOME/.virtualenvs/bert-env"
 PROJ="$HOME/.virtualenvs/oralstats-env"
 BERT_BAK=""; PROJ_BAK=""
-[ -d "$BERT" ] && BERT_BAK="$BERT.cleanbak.$$" && mv "$BERT" "$BERT_BAK" && echo ">> bert-env ocultado"
-[ -d "$PROJ" ] && PROJ_BAK="$PROJ.cleanbak.$$" && mv "$PROJ" "$PROJ_BAK" && echo ">> oralstats-env ocultado"
 
 restore() {
   [ -n "$BERT_BAK" ] && [ -d "$BERT_BAK" ] && mv "$BERT_BAK" "$BERT" && echo ">> bert-env restaurado"
@@ -24,6 +22,9 @@ restore() {
   echo ">> Copia temporal conservada en $TMP (bórrala con: rm -rf \"$TMP\")"
 }
 trap restore EXIT
+
+[ -d "$BERT" ] && BERT_BAK="$BERT.cleanbak.$$" && mv "$BERT" "$BERT_BAK" && echo ">> bert-env ocultado"
+[ -d "$PROJ" ] && PROJ_BAK="$PROJ.cleanbak.$$" && mv "$PROJ" "$PROJ_BAK" && echo ">> oralstats-env ocultado"
 
 # 2) Copiar el repo a la carpeta temporal (sin librerías ni caches).
 rsync -a --exclude 'renv/library' --exclude 'renv/python' --exclude '.git' \
