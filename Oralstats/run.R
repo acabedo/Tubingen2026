@@ -34,11 +34,17 @@ if (!file.exists("app.R") || !file.exists("R/portability.R")) {
 }
 
 # 1) Reproducir paquetes de R con renv (si está inicializado).
+#    Instalación NO transaccional: si un paquete OPCIONAL pesado (p. ej. torch,
+#    V8, soundgen) no se instala en esta máquina, NO tumba la instalación del
+#    núcleo ni el arranque de la app (esa función opcional queda desactivada).
 if (file.exists("renv/activate.R")) {
   source("renv/activate.R")
   if (requireNamespace("renv", quietly = TRUE)) {
+    options(renv.config.install.transactional = FALSE)
+    Sys.setenv(RENV_CONFIG_INSTALL_TRANSACTIONAL = "FALSE")
     tryCatch(renv::restore(prompt = FALSE),
-             error = function(e) message("Aviso: renv::restore falló: ", conditionMessage(e)))
+             error = function(e) message("Aviso: renv::restore tuvo fallos; la app arrancará con lo instalado: ",
+                                         conditionMessage(e)))
   }
 }
 
