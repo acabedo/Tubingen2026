@@ -3,6 +3,8 @@
 
 # OralStats runtime data (created when the app runs)
 Oralstats/lasp_datos/
+Oralstats/backup_etiquetado/
+Oralstats/backup_varcustom/
 
 # Subagent-driven-development scratch (ledger, briefs, diffs)
 .superpowers/
