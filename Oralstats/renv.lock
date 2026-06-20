@@ -523,46 +523,6 @@
       "Maintainer": "Jeroen Ooms <jeroenooms@gmail.com>",
       "Repository": "CRAN"
     },
-    "audio.whisper": {
-      "Package": "audio.whisper",
-      "Version": "0.4.1",
-      "Source": "GitHub",
-      "Type": "Package",
-      "Title": "Transcribe Audio Files using the \"Whisper\" Automatic Speech Recognition Model",
-      "Maintainer": "Jan Wijffels <jwijffels@bnosac.be>",
-      "Authors@R": "c( person('Jan', 'Wijffels', role = c('aut', 'cre', 'cph'), email = 'jwijffels@bnosac.be', comment = \"R wrapper\"),  person('David', 'Reid', role = c('ctb', 'cph'), comment = \"Files in src/dr_libs folder\"),  person('Georgi', 'Gerganov', role = c('ctb', 'cph'), comment = \"Files in src/whisper_cpp and files in inst folder\"),  person('BNOSAC', role = 'cph', comment = \"R wrapper\"))",
-      "Description": "The \"Whisper\" models are trained for speech recognition and translation tasks,  capable of transcribing speech audio into the text in the language it is spoken (Automatic Speech Recognition)  as well as translated into English (speech translation).  The package is an \"Rcpp\" wrapper around the standalone C++ implementation provided at <https://github.com/ggerganov/whisper.cpp>.  There are 10 pretrained models available of different sizes and language capabilities. \"Whisper\" is explained in the paper: 'Robust Speech Recognition via Large-Scale Weak Supervision' by Radford et al. (2022), available at <arXiv:2212.04356>.",
-      "License": "MIT + file LICENSE",
-      "URL": "https://github.com/bnosac/audio.whisper",
-      "Encoding": "UTF-8",
-      "Depends": [
-        "R (>= 2.10)"
-      ],
-      "Imports": [
-        "Rcpp (>= 0.11.5)",
-        "utils"
-      ],
-      "Suggests": [
-        "tinytest",
-        "audio",
-        "data.table (>= 1.12.4)",
-        "audio.vadwebrtc (>= 0.2.0)"
-      ],
-      "LinkingTo": [
-        "Rcpp"
-      ],
-      "SystemRequirements": "GNU make",
-      "RoxygenNote": "7.1.2",
-      "Remotes": "bnosac/audio.vadwebrtc",
-      "RemoteType": "github",
-      "RemoteHost": "api.github.com",
-      "RemoteRepo": "audio.whisper",
-      "RemoteUsername": "bnosac",
-      "RemoteRef": "0.4.1",
-      "RemoteSha": "4b5c6a288c0f46a4cdc47f50d2d35395d3e32194",
-      "NeedsCompilation": "yes",
-      "Author": "Jan Wijffels [aut, cre, cph] (R wrapper), David Reid [ctb, cph] (Files in src/dr_libs folder), Georgi Gerganov [ctb, cph] (Files in src/whisper_cpp and files in inst folder), BNOSAC [cph] (R wrapper)"
-    },
     "av": {
       "Package": "av",
       "Version": "0.9.6",
