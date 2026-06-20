@@ -1,0 +1,8 @@
+# OS cruft
+**/.DS_Store
+
+# OralStats runtime data (created when the app runs)
+Oralstats/lasp_datos/
+
+# Subagent-driven-development scratch (ledger, briefs, diffs)
+.superpowers/
