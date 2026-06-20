@@ -171,7 +171,9 @@ pip install praat-parselmouth pysentimiento torch torchaudio funasr soundfile wh
    ```r
    shiny::runApp("aph_extractor/app.R")     # APH
    shiny::runApp("etiquetador/etiquetador_oral.R")   # Etiquetador oral
-   shiny::runApp("Oralstats/Oralstats.R")   # Oralstats v1.8
+   # Primera vez (reproduce el entorno R + Python y arranca):
+   Rscript Oralstats/run.R                   # Oralstats v1.8
+   # (o, si ya tienes el entorno listo:)  shiny::runApp("Oralstats")
    ```
 3. Carga las muestras de `samples/` (pares WAV + TextGrid) y reproduce el análisis prosódico.
 
