@@ -2,7 +2,9 @@ name: clean-install
 on:
   workflow_dispatch:
   push:
-    branches: [ portabilidad-oralstats ]
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   reproduce:
