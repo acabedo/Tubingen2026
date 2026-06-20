@@ -1,5 +1,9 @@
 options(shiny.autoreload = FALSE)
 
+# Asegurar los paquetes de R necesarios ANTES de cargarlos (instala los que falten
+# desde CRAN). Cubre también "Run App" desde RStudio/Positron, no solo run.R.
+if (file.exists("R/ensure_r_packages.R")) source("R/ensure_r_packages.R")
+
 ################################################################################
 # Script de Análisis Prosódico en Shiny - VERSIÓN 5.0
 # Versión: 5.0
