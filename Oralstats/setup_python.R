@@ -35,10 +35,28 @@ if (!exists("ORALSTATS_VENV")) source("R/portability.R")
   ge && le
 }
 
+# Arquitectura de un intérprete, normalizada a "arm" / "x86".
+.norm_arch <- function(a) {
+  a <- tolower(a)
+  if (grepl("arm|aarch", a)) "arm" else if (grepl("x86|amd|x64|i386", a)) "x86" else a
+}
+.oralstats_py_arch <- function(py) {
+  a <- tryCatch(
+    system2(py, c("-c", shQuote("import platform; print(platform.machine())")),
+            stdout = TRUE, stderr = FALSE),
+    error = function(e) character(0)
+  )
+  if (length(a) == 1) .norm_arch(trimws(a)) else ""
+}
+
 # Elige un intérprete Python 3.9-3.12 sobre el que basar el venv del proyecto.
-# Prioridad: $ORALSTATS_PYTHON -> python3.12/3.11/3.10/3.9 del PATH -> python3/python.
-# Devuelve la ruta, o NA_character_ si no hay ninguno compatible.
+# CLAVE: prefiere uno cuya ARQUITECTURA coincida con la del sistema. En Apple
+# Silicon (arm64) esto evita coger un Python x86_64 bajo Rosetta, que rompe los
+# wheels de numba/torch/whisperx. Prioridad: $ORALSTATS_PYTHON ->
+# python3.12/3.11/3.10/3.9/python3/python, primero los de arquitectura nativa.
 oralstats_choose_python <- function() {
+  host_arch <- .norm_arch(Sys.info()[["machine"]])
+
   override <- Sys.getenv("ORALSTATS_PYTHON", "")
   if (nzchar(override)) {
     if (file.exists(override) && .oralstats_py_compatible(.oralstats_py_version(override))) {
@@ -46,11 +64,19 @@ oralstats_choose_python <- function() {
     }
     warning("ORALSTATS_PYTHON='", override, "' no existe o no es Python 3.9-3.12; se ignora.")
   }
-  for (name in c("python3.12", "python3.11", "python3.10", "python3.9", "python3", "python")) {
-    p <- Sys.which(name)
-    if (nzchar(p) && .oralstats_py_compatible(.oralstats_py_version(p))) return(unname(p))
-  }
-  NA_character_
+
+  cand <- c("python3.12", "python3.11", "python3.10", "python3.9", "python3", "python")
+  paths <- unique(Filter(nzchar, vapply(cand, function(n) unname(Sys.which(n)), character(1))))
+  compat <- Filter(function(p) .oralstats_py_compatible(.oralstats_py_version(p)), paths)
+  if (length(compat) == 0) return(NA_character_)
+
+  # Preferir arquitectura nativa (evita Rosetta en Apple Silicon).
+  native <- Filter(function(p) identical(.oralstats_py_arch(p), host_arch), compat)
+  if (length(native) > 0) return(native[[1]])
+
+  warning("No se encontró un Python compatible de arquitectura '", host_arch,
+          "'; usando ", compat[[1]], " (podrían faltar wheels de numba/torch).")
+  compat[[1]]
 }
 
 oralstats_bootstrap <- function(level = "text") {
