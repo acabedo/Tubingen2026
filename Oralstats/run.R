@@ -48,11 +48,14 @@ if (file.exists("renv/activate.R")) {
   }
 }
 
-# 2) Bootstrap del entorno Python del proyecto (core+text por defecto).
+# 2) Bootstrap del entorno Python del proyecto.
+#    Por defecto, arranque LIGERO (nivel 'core': parselmouth + tgt). Los niveles 2
+#    (sentimiento/emoción) y 3 (transcripción) se instalan bajo demanda desde los
+#    botones de la pestaña "Dependencias Python". Override: ORALSTATS_PY_LEVEL=text.
 source("R/portability.R")
 source("setup_python.R")
 tryCatch(
-  oralstats_bootstrap(level = Sys.getenv("ORALSTATS_PY_LEVEL", "text")),
+  oralstats_bootstrap(level = Sys.getenv("ORALSTATS_PY_LEVEL", "core")),
   error = function(e) message("Aviso: bootstrap de Python falló (la app arrancará igual): ",
                               conditionMessage(e))
 )
