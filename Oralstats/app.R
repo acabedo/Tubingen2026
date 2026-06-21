@@ -49,24 +49,11 @@ base64enc_disponible <- requireNamespace("base64enc", quietly = TRUE)
 praatpicture_disponible <- requireNamespace("praatpicture", quietly = TRUE)
 
 # Helpers de portabilidad (intérprete Python del proyecto + binarios de sistema).
+# NOTA: app.R NO instala Python al abrir (así arranca de forma independiente). El
+# entorno Python se prepara con run.R (núcleo) o con los botones de "Dependencias
+# Python" (niveles 2/3). Si el entorno aún no existe, esas funciones quedan
+# desactivadas hasta que se instalen, pero la app abre igual.
 if (file.exists("R/portability.R")) source("R/portability.R")
-
-# Preparar el entorno Python del proyecto la PRIMERA vez (crea conda + nivel core),
-# para que abrir app.R con "Run App" funcione igual que ejecutar run.R. En arranques
-# posteriores el entorno ya existe y este bloque no hace nada.
-if (file.exists("R/setup_python.R") && exists("ORALSTATS_VENV")) {
-  .oralstats_env_ok <- isTRUE(tryCatch(
-    requireNamespace("reticulate", quietly = TRUE) &&
-      ORALSTATS_VENV %in% tryCatch(reticulate::conda_list()$name,
-                                   error = function(e) character(0)),
-    error = function(e) FALSE
-  ))
-  if (!.oralstats_env_ok) {
-    message("OralStats: preparando el entorno Python por primera vez (puede tardar varios minutos)…")
-    source("R/setup_python.R")
-    try(oralstats_bootstrap(Sys.getenv("ORALSTATS_PY_LEVEL", "core")), silent = TRUE)
-  }
-}
 
 # ========================================
 # TRANSCRIPCIÓN FONÉTICA IPA (ESPAÑOL)
