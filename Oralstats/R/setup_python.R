@@ -105,5 +105,6 @@ local({
   a <- commandArgs(trailingOnly = TRUE)
   if (length(a) >= 1 && a[[1]] %in% c("core", "text", "asr", "all")) {
     oralstats_bootstrap(a[[1]])
+    cat("\nORALSTATS_BOOTSTRAP_DONE\n")   # marca de fin para el modal de progreso de la app
   }
 })
