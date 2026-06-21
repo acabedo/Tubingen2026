@@ -14,7 +14,7 @@
 
 if (!exists("ORALSTATS_VENV")) source("R/portability.R")
 
-# ── Selección de Python (versión 3.9-3.12 y arquitectura nativa) ──────────────
+# ── Selección de Python (versión 3.10-3.12 y arquitectura nativa) ──────────────
 .norm_arch <- function(a) {
   a <- tolower(a)
   if (grepl("arm|aarch", a)) "arm" else if (grepl("x86|amd|x64|i386", a)) "x86" else a
@@ -29,8 +29,9 @@ if (!exists("ORALSTATS_VENV")) source("R/portability.R")
   as.integer(parts)
 }
 .oralstats_py_compatible <- function(v) {
+  # Mínimo 3.10: spacy/thinc (vía pysentimiento) ya NO soportan Python 3.9.
   if (is.null(v)) return(FALSE)
-  (v[1] > 3 || (v[1] == 3 && v[2] >= 9)) && (v[1] < 3 || (v[1] == 3 && v[2] <= 12))
+  (v[1] > 3 || (v[1] == 3 && v[2] >= 10)) && (v[1] < 3 || (v[1] == 3 && v[2] <= 12))
 }
 .oralstats_py_arch <- function(py) {
   a <- tryCatch(
