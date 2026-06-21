@@ -4949,13 +4949,14 @@ server <- function(input, output, session) {
     rv_inst$running <- TRUE
     showModal(modalDialog(
       title = tagList(icon("download"), paste0(" Instalando nivel '", nivel, "'")),
+      tags$style(HTML(
+        "#oralstats_install_log { background-color:#1e1e1e !important; color:#e6e6e6 !important;
+         border:none !important; max-height:300px; overflow-y:auto; font-size:11px;
+         white-space:pre-wrap; padding:8px; border-radius:4px; }")),
       tags$p("Esto puede tardar varios minutos (descarga de paquetes). ",
              tags$b("No cierres la app."), " Progreso en vivo:"),
-      div(style = "max-height:300px; overflow-y:auto; background:#1e1e1e; color:#d4d4d4; padding:8px; border-radius:4px; font-size:11px; white-space:pre-wrap;",
-          verbatimTextOutput("oralstats_install_log")),
-      div(class = "text-muted", style = "font-size:0.85em; margin-top:6px;",
-          tags$span(class = "spinner-border spinner-border-sm", role = "status"),
-          " Instalando…"),
+      verbatimTextOutput("oralstats_install_log"),
+      uiOutput("oralstats_install_status"),
       footer = actionButton("oralstats_install_cerrar", "Cerrar", class = "btn-secondary"),
       easyClose = FALSE, size = "l"
     ))
@@ -4980,6 +4981,16 @@ server <- function(input, output, session) {
     }
   })
   output$oralstats_install_log <- renderText({ rv_inst$tail })
+  output$oralstats_install_status <- renderUI({
+    if (isTRUE(rv_inst$running)) {
+      tags$div(class = "text-muted", style = "font-size:0.85em; margin-top:8px;",
+               tags$span(class = "spinner-border spinner-border-sm", role = "status"),
+               " Instalando… (no cierres la app)")
+    } else {
+      tags$div(class = "text-success", style = "font-weight:600; margin-top:8px;",
+               icon("check-circle"), " Instalación finalizada. Pulsa 'Cerrar'.")
+    }
+  })
 
   # Ejecutar diagnóstico inicial al arrancar la sesión (sin bloquear UI)
   observe({
