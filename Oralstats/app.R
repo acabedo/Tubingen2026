@@ -4935,17 +4935,51 @@ server <- function(input, output, session) {
     isolate({ rv_diagnostico(run_diagnostico()) })
   }, ignoreNULL = TRUE)
 
+  # Estado de la instalación de niveles Python (para el modal de progreso en vivo).
+  rv_inst <- reactiveValues(running = FALSE, logfile = NULL, level = "", tail = "")
+
   lanzar_instalacion <- function(nivel) {
     rscript <- file.path(R.home("bin"), if (.Platform$OS.type == "windows") "Rscript.exe" else "Rscript")
-    system2(rscript, c("R/setup_python.R", nivel), wait = FALSE)
-    showNotification(
-      paste0("Instalando nivel '", nivel, "' en segundo plano. Puede tardar varios minutos; ",
-             "pulsa 'Verificar ahora' cuando termine."),
-      type = "message", duration = 12
-    )
+    logf <- tempfile(fileext = ".log"); file.create(logf)
+    # Instalación en segundo plano; su salida (stdout+stderr) va al log que el modal lee.
+    system2(rscript, c("R/setup_python.R", nivel), stdout = logf, stderr = logf, wait = FALSE)
+    rv_inst$logfile <- logf
+    rv_inst$level   <- nivel
+    rv_inst$tail    <- "Iniciando instalación…"
+    rv_inst$running <- TRUE
+    showModal(modalDialog(
+      title = tagList(icon("download"), paste0(" Instalando nivel '", nivel, "'")),
+      tags$p("Esto puede tardar varios minutos (descarga de paquetes). ",
+             tags$b("No cierres la app."), " Progreso en vivo:"),
+      div(style = "max-height:300px; overflow-y:auto; background:#1e1e1e; color:#d4d4d4; padding:8px; border-radius:4px; font-size:11px; white-space:pre-wrap;",
+          verbatimTextOutput("oralstats_install_log")),
+      div(class = "text-muted", style = "font-size:0.85em; margin-top:6px;",
+          tags$span(class = "spinner-border spinner-border-sm", role = "status"),
+          " Instalando…"),
+      footer = actionButton("oralstats_install_cerrar", "Cerrar", class = "btn-secondary"),
+      easyClose = FALSE, size = "l"
+    ))
   }
   observeEvent(input$btn_instalar_nivel2, lanzar_instalacion("text"))
   observeEvent(input$btn_instalar_nivel3, lanzar_instalacion("asr"))
+  observeEvent(input$oralstats_install_cerrar, removeModal())
+
+  # Poller: mientras instala, leer el log en vivo y detectar el final.
+  observe({
+    if (!isTRUE(rv_inst$running)) return()
+    invalidateLater(1200)
+    lf <- rv_inst$logfile
+    if (is.null(lf) || !file.exists(lf)) return()
+    lns <- tryCatch(readLines(lf, warn = FALSE), error = function(e) character(0))
+    rv_inst$tail <- paste(utils::tail(lns, 40), collapse = "\n")
+    if (any(grepl("ORALSTATS_BOOTSTRAP_DONE", lns, fixed = TRUE))) {
+      rv_inst$running <- FALSE
+      rv_inst$tail <- paste0(rv_inst$tail, "\n\n=== ✅ COMPLETADO ===")
+      showNotification("Instalación finalizada.", type = "message", duration = 8)
+      isolate({ rv_diagnostico(run_diagnostico()) })   # refresca el diagnóstico
+    }
+  })
+  output$oralstats_install_log <- renderText({ rv_inst$tail })
 
   # Ejecutar diagnóstico inicial al arrancar la sesión (sin bloquear UI)
   observe({
