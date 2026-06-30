@@ -15,7 +15,7 @@ Después:
   5) En el panel de archivos (izquierda), abre el fichero:  run.R
   6) Pulsa el botón  > Source  (arriba a la derecha del editor).
   7) ESPERA. La primera vez descarga e instala todo solo:
-     paquetes de R, Python y dependencias.
+     paquetes de R, Python (Miniconda) y dependencias.
      Puede tardar varios minutos. Luego la app se abre en el navegador.
 
 NO tienes que instalar Python ni conda: lo hace todo run.R.
